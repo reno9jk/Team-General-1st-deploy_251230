@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team General's - 성과 관리 시스템</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-users-cog"></i>
+                <h1>Team General's</h1>
+            </div>
+            <!-- 연도 선택 -->
+            <div class="year-selector">
+                <label for="yearSelect"><i class="fas fa-calendar-alt"></i> 평가 연도</label>
+                <select id="yearSelect">
+                    <option value="2025">2025년</option>
+                    <option value="2026" selected>2026년</option>
+                    <option value="2027">2027년</option>
+                    <option value="2028">2028년</option>
+                    <option value="2029">2029년</option>
+                    <option value="2030">2030년</option>
+                    <option value="2031">2031년</option>
+                    <option value="2032">2032년</option>
+                    <option value="2033">2033년</option>
+                    <option value="2034">2034년</option>
+                    <option value="2035">2035년</option>
+                </select>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-view="dashboard">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>대시보드</span>
+                </button>
+                <button class="nav-btn" data-view="projects">
+                    <i class="fas fa-folder-open"></i>
+                    <span>프로젝트</span>
+                </button>
+                <button class="nav-btn" data-view="members">
+                    <i class="fas fa-users"></i>
+                    <span>구성원</span>
+                </button>
+                <button class="nav-btn" data-view="evaluation">
+                    <i class="fas fa-trophy"></i>
+                    <span>종합평가</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="main-content">
+            <!-- 헤더 -->
+            <header class="header">
+                <h2 class="page-title">대시보드</h2>
+                <div class="header-actions" id="headerActions">
+                    <button class="btn btn-primary" id="addProjectBtn">
+                        <i class="fas fa-plus"></i>
+                        새 프로젝트
+                    </button>
+                    <button class="btn btn-primary" id="addMemberFromListBtn" style="display: none;">
+                        <i class="fas fa-user-plus"></i>
+                        구성원 추가
+                    </button>
+                </div>
+            </header>
+
+            <!-- 대시보드 뷰 -->
+            <section class="view active" id="dashboardView">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalProjects">0</h3>
+                            <p>전체 프로젝트</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="completedProjects">0</h3>
+                            <p>완료된 프로젝트</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-spinner"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="inProgressProjects">0</h3>
+                            <p>진행중인 프로젝트</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalMembers">0</h3>
+                            <p>전체 구성원</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 밴드별 구성원 현황 -->
+                <div class="band-stats-section">
+                    <div class="band-stat-card band-a">
+                        <div class="band-stat-header">
+                            <span class="band-badge band-badge-a">A</span>
+                            <h4>Band A</h4>
+                        </div>
+                        <div class="band-stat-body">
+                            <div class="band-stat-item">
+                                <span class="band-stat-value" id="bandACount">0</span>
+                                <span class="band-stat-label">구성원</span>
+                            </div>
+                            <div class="band-stat-item">
+                                <span class="band-stat-value" id="bandAAvgProgress">0%</span>
+                                <span class="band-stat-label">평균 진척도</span>
+                            </div>
+                            <div class="band-stat-item">
+                                <span class="band-stat-value" id="bandAAvgContribution">0</span>
+                                <span class="band-stat-label">평균 기여도</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="band-stat-card band-b">
+                        <div class="band-stat-header">
+                            <span class="band-badge band-badge-b">B</span>
+                            <h4>Band B</h4>
+                        </div>
+                        <div class="band-stat-body">
+                            <div class="band-stat-item">
+                                <span class="band-stat-value" id="bandBCount">0</span>
+                                <span class="band-stat-label">구성원</span>
+                            </div>
+                            <div class="band-stat-item">
+                                <span class="band-stat-value" id="bandBAvgProgress">0%</span>
+                                <span class="band-stat-label">평균 진척도</span>
+                            </div>
+                            <div class="band-stat-item">
+                                <span class="band-stat-value" id="bandBAvgContribution">0</span>
+                                <span class="band-stat-label">평균 기여도</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>프로젝트 진척률</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="projectProgressList" class="progress-list"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header card-header-with-tabs">
+                            <h3>TOP 기여자</h3>
+                            <div class="contributor-controls">
+                                <div class="view-toggle" id="contributorViewToggle">
+                                    <button class="toggle-btn active" data-view="individual">개인개별</button>
+                                    <button class="toggle-btn" data-view="consolidated">개인통합</button>
+                                </div>
+                                <div class="tab-buttons" id="contributorBandTabs">
+                                    <button class="tab-btn active" data-band="all">전체</button>
+                                    <button class="tab-btn" data-band="A">Band A</button>
+                                    <button class="tab-btn" data-band="B">Band B</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="topContributors" class="contributors-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 프로젝트 뷰 -->
+            <section class="view" id="projectsView">
+                <div class="project-list" id="projectList"></div>
+            </section>
+
+            <!-- 구성원 뷰 -->
+            <section class="view" id="membersView">
+                <!-- 밴드 필터 탭 -->
+                <div class="filter-section">
+                    <div class="filter-tabs" id="memberBandFilter">
+                        <button class="filter-tab active" data-band="all">
+                            <i class="fas fa-users"></i>
+                            전체
+                            <span class="filter-count" id="filterCountAll">0</span>
+                        </button>
+                        <button class="filter-tab" data-band="A">
+                            <span class="band-badge band-badge-a small">A</span>
+                            Band A
+                            <span class="filter-count" id="filterCountA">0</span>
+                        </button>
+                        <button class="filter-tab" data-band="B">
+                            <span class="band-badge band-badge-b small">B</span>
+                            Band B
+                            <span class="filter-count" id="filterCountB">0</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="members-grid" id="membersList"></div>
+            </section>
+
+            <!-- 종합평가 뷰 -->
+            <section class="view" id="evaluationView">
+                <!-- 평가 요약 카드 -->
+                <div class="evaluation-summary">
+                    <div class="eval-summary-card">
+                        <div class="eval-summary-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="eval-summary-info">
+                            <h3 id="evalTotalMembers">0</h3>
+                            <p>평가 대상</p>
+                        </div>
+                    </div>
+                    <div class="eval-summary-card">
+                        <div class="eval-summary-icon blue">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div class="eval-summary-info">
+                            <h3 id="evalTotalProjects">0</h3>
+                            <p>참여 프로젝트</p>
+                        </div>
+                    </div>
+                    <div class="eval-summary-card">
+                        <div class="eval-summary-icon green">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="eval-summary-info">
+                            <h3 id="evalAvgScore">0</h3>
+                            <p>평균 종합점수</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 밴드별 필터 -->
+                <div class="filter-section">
+                    <div class="filter-tabs" id="evalBandFilter">
+                        <button class="filter-tab active" data-band="all">
+                            <i class="fas fa-trophy"></i>
+                            전체 순위
+                        </button>
+                        <button class="filter-tab" data-band="A">
+                            <span class="band-badge band-badge-a small">A</span>
+                            Band A 순위
+                        </button>
+                        <button class="filter-tab" data-band="B">
+                            <span class="band-badge band-badge-b small">B</span>
+                            Band B 순위
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 순위 테이블 -->
+                <div class="evaluation-table-container">
+                    <table class="evaluation-table">
+                        <thead>
+                            <tr>
+                                <th class="rank-col">순위</th>
+                                <th>구성원</th>
+                                <th>밴드</th>
+                                <th>참여 프로젝트</th>
+                                <th>역할</th>
+                                <th>평균 진척도</th>
+                                <th>평균 기여도</th>
+                                <th>평균 협업</th>
+                                <th>평균 주도성</th>
+                                <th>평균 실력</th>
+                                <th>종합점수</th>
+                            </tr>
+                        </thead>
+                        <tbody id="evaluationRankingList"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 프로젝트 모달 -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="projectModalTitle">새 프로젝트</h3>
+                <button class="close-btn" id="closeProjectModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="projectForm">
+                <input type="hidden" id="projectId">
+                <div class="form-group">
+                    <label for="projectName">프로젝트명</label>
+                    <input type="text" id="projectName" required placeholder="프로젝트 이름을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="projectDescription">설명</label>
+                    <textarea id="projectDescription" rows="3" placeholder="프로젝트 설명을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="projectDeadline">마감일</label>
+                    <input type="date" id="projectDeadline">
+                </div>
+                <div class="form-group">
+                    <label for="projectStatus">상태</label>
+                    <select id="projectStatus">
+                        <option value="planning">기획중</option>
+                        <option value="in-progress" selected>진행중</option>
+                        <option value="completed">완료</option>
+                        <option value="on-hold">보류</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="projectYear">평가 연도</label>
+                        <select id="projectYear">
+                            <option value="2025">2025년</option>
+                            <option value="2026" selected>2026년</option>
+                            <option value="2027">2027년</option>
+                            <option value="2028">2028년</option>
+                            <option value="2029">2029년</option>
+                            <option value="2030">2030년</option>
+                            <option value="2031">2031년</option>
+                            <option value="2032">2032년</option>
+                            <option value="2033">2033년</option>
+                            <option value="2034">2034년</option>
+                            <option value="2035">2035년</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectWeight">가중치 (1-10)</label>
+                        <select id="projectWeight">
+                            <option value="1">1 (최저)</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5" selected>5 (보통)</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10 (최고)</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="form-hint">평가 연도와 가중치는 구성원 종합평가에 반영됩니다</p>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelProjectBtn">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 구성원 추가 모달 -->
+    <div class="modal" id="memberModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="memberModalTitle">구성원 추가</h3>
+                <button class="close-btn" id="closeMemberModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="memberForm">
+                <input type="hidden" id="memberId">
+                <input type="hidden" id="memberProjectId">
+                <div class="form-group">
+                    <label for="memberName">이름</label>
+                    <input type="text" id="memberName" required placeholder="구성원 이름을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="memberRole">역할</label>
+                    <input type="text" id="memberRole" placeholder="역할 (예: 개발자, 디자이너)">
+                </div>
+                <div class="form-group">
+                    <label for="memberBand">밴드</label>
+                    <div class="band-select-group">
+                        <label class="band-radio">
+                            <input type="radio" name="memberBand" value="A" checked>
+                            <span class="band-radio-label band-a-label">
+                                <span class="band-badge band-badge-a">A</span>
+                                Band A
+                            </span>
+                        </label>
+                        <label class="band-radio">
+                            <input type="radio" name="memberBand" value="B">
+                            <span class="band-radio-label band-b-label">
+                                <span class="band-badge band-badge-b">B</span>
+                                Band B
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="memberProject">프로젝트</label>
+                    <select id="memberProject">
+                        <option value="">프로젝트 선택</option>
+                    </select>
+                </div>
+                <div class="form-divider">
+                    <span>성과 평가</span>
+                </div>
+                <div class="form-group">
+                    <label for="memberProgress">진척도 (%)</label>
+                    <input type="range" id="memberProgress" min="0" max="100" value="0">
+                    <span id="progressValue">0%</span>
+                </div>
+                <div class="form-group">
+                    <label for="memberContribution">기여도 (1-10)</label>
+                    <input type="range" id="memberContribution" min="1" max="10" value="5">
+                    <span id="contributionValue">5</span>
+                </div>
+                <div class="form-group">
+                    <label for="memberCollaboration">협업기여 (1-10)</label>
+                    <input type="range" id="memberCollaboration" min="1" max="10" value="5">
+                    <span id="collaborationValue">5</span>
+                </div>
+                <div class="form-group">
+                    <label for="memberLeadership">주도성 (1-10)</label>
+                    <input type="range" id="memberLeadership" min="1" max="10" value="5">
+                    <span id="leadershipValue">5</span>
+                </div>
+                <div class="form-group">
+                    <label for="memberSkill">실력 (1-10)</label>
+                    <input type="range" id="memberSkill" min="1" max="10" value="5">
+                    <span id="skillValue">5</span>
+                </div>
+                <div class="form-group">
+                    <label for="memberNotes">기타 특이사항</label>
+                    <textarea id="memberNotes" rows="3" placeholder="기타 특이사항을 입력하세요"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelMemberBtn">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 프로젝트 상세 모달 -->
+    <div class="modal" id="projectDetailModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="projectDetailTitle">프로젝트 상세</h3>
+                <button class="close-btn" id="closeProjectDetailModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="project-detail-info" id="projectDetailInfo"></div>
+                
+                <!-- 로드맵 섹션 -->
+                <div class="project-roadmap-section">
+                    <div class="section-header">
+                        <h4><i class="fas fa-road"></i> 로드맵</h4>
+                        <button class="btn btn-sm btn-primary" id="addMilestoneBtn">
+                            <i class="fas fa-plus"></i> 세부 항목 추가
+                        </button>
+                    </div>
+                    <div class="roadmap-container" id="roadmapContainer">
+                        <!-- 동적으로 생성됨 -->
+                    </div>
+                </div>
+
+                <div class="project-members-section">
+                    <div class="section-header">
+                        <h4><i class="fas fa-users"></i> 구성원</h4>
+                        <div class="section-header-actions">
+                            <div class="mini-tabs" id="projectMemberBandFilter">
+                                <button class="mini-tab active" data-band="all">전체</button>
+                                <button class="mini-tab" data-band="A">A</button>
+                                <button class="mini-tab" data-band="B">B</button>
+                            </div>
+                            <button class="btn btn-sm btn-primary" id="addMemberBtn">
+                                <i class="fas fa-plus"></i> 구성원 추가
+                            </button>
+                        </div>
+                    </div>
+                    <div class="members-table-container">
+                        <table class="members-table">
+                            <thead>
+                                <tr>
+                                    <th>이름</th>
+                                    <th>밴드</th>
+                                    <th>역할</th>
+                                    <th>진척도</th>
+                                    <th>기여도</th>
+                                    <th>협업기여</th>
+                                    <th>주도성</th>
+                                    <th>실력</th>
+                                    <th>액션</th>
+                                </tr>
+                            </thead>
+                            <tbody id="projectMembersList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 세부 항목(마일스톤) 모달 -->
+    <div class="modal" id="milestoneModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="milestoneModalTitle">세부 항목 추가</h3>
+                <button class="close-btn" id="closeMilestoneModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="milestoneForm">
+                <input type="hidden" id="milestoneId">
+                <input type="hidden" id="milestoneProjectId">
+                <div class="form-group">
+                    <label for="milestoneName">항목명</label>
+                    <input type="text" id="milestoneName" required placeholder="세부 항목 이름을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="milestoneDescription">설명</label>
+                    <input type="text" id="milestoneDescription" placeholder="항목 설명 (선택)">
+                </div>
+                <div class="form-group">
+                    <label for="milestoneYear">연도</label>
+                    <select id="milestoneYear">
+                        <!-- 동적으로 생성됨 -->
+                    </select>
+                </div>
+                <div class="form-divider">
+                    <span>월별 진척도 (%)</span>
+                </div>
+                <div class="monthly-progress-grid">
+                    <div class="month-input">
+                        <label>1월</label>
+                        <input type="number" id="month1" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>2월</label>
+                        <input type="number" id="month2" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>3월</label>
+                        <input type="number" id="month3" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>4월</label>
+                        <input type="number" id="month4" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>5월</label>
+                        <input type="number" id="month5" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>6월</label>
+                        <input type="number" id="month6" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>7월</label>
+                        <input type="number" id="month7" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>8월</label>
+                        <input type="number" id="month8" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>9월</label>
+                        <input type="number" id="month9" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>10월</label>
+                        <input type="number" id="month10" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>11월</label>
+                        <input type="number" id="month11" min="0" max="100" value="0">
+                    </div>
+                    <div class="month-input">
+                        <label>12월</label>
+                        <input type="number" id="month12" min="0" max="100" value="0">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelMilestoneBtn">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase 설정 -->
+    <script src="firebase-config.js"></script>
+    <!-- 인증 설정 -->
+    <script src="auth-config.js"></script>
+    <!-- Firebase DataStore -->
+    <script src="firebase-datastore.js"></script>
+    <!-- 메인 스크립트 -->
+    <script src="script.js"></script>
+</body>
+</html>
