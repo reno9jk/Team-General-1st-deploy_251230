@@ -774,8 +774,14 @@ class FirebaseDataStore {
 
     // LocalStorage에서 데이터 마이그레이션
     async migrateFromLocalStorage() {
-        if (!this.initialized || !this.db || !this.userId) {
-            console.warn('Firebase가 초기화되지 않아 마이그레이션을 수행할 수 없습니다.');
+        // Firebase 초기화 및 사용자 인증 완료 대기
+        if (!this.db || !this.userId) {
+            // 아직 초기화되지 않았으면 조용히 실패 (오류 로그 제거)
+            return false;
+        }
+        
+        // 이미 마이그레이션된 경우 건너뛰기
+        if (localStorage.getItem('firebase_migrated') === 'true') {
             return false;
         }
 
