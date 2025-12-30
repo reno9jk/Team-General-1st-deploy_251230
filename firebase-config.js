@@ -6,13 +6,13 @@
 // 에서 복사한 설정을 아래에 붙여넣으세요
 
 const firebaseConfig = {
-    // 예시 (실제 값으로 교체하세요):
-    // apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    // authDomain: "your-project.firebaseapp.com",
-    // projectId: "your-project-id",
-    // storageBucket: "your-project.appspot.com",
-    // messagingSenderId: "123456789012",
-    // appId: "1:123456789012:web:abcdef1234567890"
+    apiKey: "AIzaSyCKFfAui27YhiQvvwKU9c2HWGV7YehiV9g",
+    authDomain: "gen-s-0426.firebaseapp.com",
+    projectId: "gen-s-0426",
+    storageBucket: "gen-s-0426.firebasestorage.app",
+    messagingSenderId: "1088106135704",
+    appId: "1:1088106135704:web:eeec8bc012a607d78090ed",
+    measurementId: "G-RENBR9S887"
 };
 
 // Firebase가 초기화되었는지 확인
@@ -59,14 +59,10 @@ function getFirebaseServices() {
         const auth = firebase.auth();
         const db = firebase.firestore();
         
-        // Firestore 설정 (오프라인 지속성 활성화)
-        db.enablePersistence().catch((err) => {
-            if (err.code == 'failed-precondition') {
-                console.warn('Firestore 오프라인 지속성을 활성화할 수 없습니다. 여러 탭이 열려있을 수 있습니다.');
-            } else if (err.code == 'unimplemented') {
-                console.warn('브라우저가 Firestore 오프라인 지속성을 지원하지 않습니다.');
-            }
-        });
+        // Firestore 설정 (오프라인 캐시 활성화 - 최신 방식)
+        // enablePersistence()는 deprecated 되었으므로 FirestoreSettings 사용
+        // 하지만 compat 버전에서는 기본적으로 캐싱이 활성화되어 있습니다
+        // 오프라인 지원은 자동으로 작동하므로 별도 설정 불필요
         
         return { auth, db };
     } catch (error) {
