@@ -427,9 +427,18 @@ class App {
 
     async migrateDataOnce() {
         if (this.store instanceof FirebaseDataStore) {
+            // Firebase 초기화 및 사용자 인증 완료 대기
+            let attempts = 0;
+            const maxAttempts = 50; // 최대 5초 대기
+            
+            while (attempts < maxAttempts && (!this.store.initialized || !this.store.userId)) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
             // 마이그레이션 완료 플래그 확인
             const migrated = localStorage.getItem('firebase_migrated');
-            if (!migrated && this.store.initialized) {
+            if (!migrated && this.store.initialized && this.store.userId) {
                 const hasLocalData = localStorage.getItem('projects') || 
                                      localStorage.getItem('members') || 
                                      localStorage.getItem('milestones');
@@ -439,8 +448,13 @@ class App {
                         '마이그레이션 후 PC와 스마트폰에서 동일한 데이터를 사용할 수 있습니다.'
                     );
                     if (confirm) {
-                        await this.store.migrateFromLocalStorage();
-                        localStorage.setItem('firebase_migrated', 'true');
+                        try {
+                            await this.store.migrateFromLocalStorage();
+                            localStorage.setItem('firebase_migrated', 'true');
+                        } catch (error) {
+                            console.error('마이그레이션 실패:', error);
+                            alert('데이터 마이그레이션에 실패했습니다. 다시 시도해주세요.');
+                        }
                     }
                 }
             }
